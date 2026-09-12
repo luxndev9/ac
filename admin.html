@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" type="image/x-icon" href="/crown.ico">
+<title>Azure Admin</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+body{min-height:100vh}.admin{max-width:850px;margin:70px auto;padding:25px}.box{border:1px solid #472016;background:#0e0809;padding:28px;margin-top:18px}.box h1{font-size:25px;margin-top:0}.input{width:100%;height:45px;margin:7px 0 13px;padding:0 12px;background:#090506;border:1px solid #422018;color:#fff;outline:0}.save{width:100%;height:45px;background:linear-gradient(100deg,#85110b,#ef3814,#ff8125);border:1px solid #ff7440;color:#fff;font-weight:900;cursor:pointer}.member-edit{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:10px 0;padding:12px;border:1px solid #2e1713}.msg{color:#ff8b60;font-size:11px;margin-top:12px}@media(max-width:700px){.member-edit{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="admin">
+  <div class="eyebrow">AZURE / RESTRICTED</div>
+  <div class="box" id="loginBox">
+    <h1>ADMIN PANEL</h1>
+    <input class="input" id="username" placeholder="Usuario" autocomplete="username">
+    <input class="input" id="password" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="save" onclick="login()">ENTRAR</button>
+    <div class="msg" id="loginMsg"></div>
+  </div>
+  <div class="box" id="panel" style="display:none">
+    <h1>TEAM</h1>
+    <div id="members"></div>
+    <button class="save" onclick="save()">GUARDAR CAMBIOS</button>
+    <div class="msg" id="msg"></div>
+  </div>
+</div>
+<script>
+async function login(){
+  const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:username.value,password:password.value})});
+  if(r.ok){loginBox.style.display="none";panel.style.display="block";load();}
+  else loginMsg.textContent="Credenciales incorrectas.";
+}
+async function load(){
+  const r=await fetch("/api/team"); const t=await r.json();
+  members.innerHTML=t.map((m,i)=>`<div class="member-edit">
+    <input class="input n" value="${esc(m.name)}" placeholder="Nombre">
+    <input class="input ro" value="${esc(m.role)}" placeholder="Rol">
+    <input class="input im" value="${esc(m.image||"")}" placeholder="URL de foto/GIF">
+  </div>`).join("");
+}
+async function save(){
+  const rows=[...document.querySelectorAll(".member-edit")];
+  const team=rows.map(x=>({name:x.querySelector(".n").value,role:x.querySelector(".ro").value,image:x.querySelector(".im").value}));
+  const r=await fetch("/api/team",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(team)});
+  msg.textContent=r.ok?"✓ Cambios guardados":"No se pudieron guardar los cambios.";
+}
+function esc(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;")}
+</script>
+</body>
+</html>
